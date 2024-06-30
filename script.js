@@ -5,7 +5,7 @@ let words = [];
 let currentIndex = 0;
 let isSequential = true;
 let showingEnglish = true;
-let understoodWords = [];
+let understoodWords = JSON.parse(localStorage.getItem('understoodWords')) || [];
 let displayedWords = [];
 
 // ページが読み込まれたときにGoogle Sheetsから単語リストをロード
@@ -91,15 +91,24 @@ function toggleWord() {
             return;
         }
 
-        if (isSequential) {
-            do {
-                currentIndex = (currentIndex + 1) % words.length;
-            } while (understoodWords.includes(currentIndex) || displayedWords[currentIndex]);
-        } else {
-            do {
-                currentIndex = Math.floor(Math.random() * words.length);
-            } while (understoodWords.includes(currentIndex) || displayedWords[currentIndex]);
-        }
+        getNextWordIndex();
+        showingEnglish = true;
+        wordDisplay.textContent = words[currentIndex].english;
+        speakWord(words[currentIndex].english);
+    }
+}
+
+function getNextWordIndex() {
+    if (isSequential) {
+        do {
+            currentIndex = (currentIndex + 1) % words.length;
+        } while (understoodWords.includes(currentIndex) || displayedWords[currentIndex]);
+    } else {
+        let nextIndex;
+        do {
+            nextIndex = Math.floor(Math.random() * words.length);
+        } while (understoodWords.includes(nextIndex) || displayedWords[nextIndex]);
+        currentIndex = nextIndex;
     }
 }
 
@@ -112,8 +121,12 @@ function toggleOrder() {
 function markAsUnderstood() {
     if (!understoodWords.includes(currentIndex)) {
         understoodWords.push(currentIndex);
+        localStorage.setItem('understoodWords', JSON.stringify(understoodWords));
     }
-    toggleWord();
+    getNextWordIndex(); // Ensure the next word is retrieved correctly
+    showingEnglish = true;
+    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
+    speakWord(words[currentIndex].english);
 }
 
 function displaySummaryScreen() {
@@ -133,6 +146,7 @@ function displaySummaryScreen() {
             } else {
                 understoodWords.push(index);
             }
+            localStorage.setItem('understoodWords', JSON.stringify(understoodWords));
             wordDiv.querySelector('button').textContent = understoodWords.includes(index) ? '解除' : '理解した';
         });
 
@@ -156,7 +170,6 @@ function restartApp() {
 }
 
 function speakWord(word) {
-    // 音声再生はユーザーのインタラクションで実行される必要があるため、関数を呼び出し元で実行
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = 'en-US';
     utterance.onstart = () => {
