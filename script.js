@@ -15,7 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('updateButton').addEventListener('click', () => {
         document.getElementById('fileInput').click();
     });
-    document.getElementById('wordDisplay').addEventListener('click', toggleWord);
+    document.getElementById('wordDisplay').addEventListener('click', () => {
+        if (words.length > 0) {
+            toggleWord();
+        }
+    });
     document.getElementById('understoodButton').addEventListener('click', markAsUnderstood);
     document.getElementById('orderToggle').addEventListener('click', toggleOrder);
     document.getElementById('restartButton').addEventListener('click', restartApp);
@@ -68,8 +72,6 @@ function handleFile(event) {
 }
 
 function toggleWord() {
-    if (words.length === 0) return;
-
     const wordDisplay = document.getElementById('wordDisplay');
     const understoodButton = document.getElementById('understoodButton');
 
