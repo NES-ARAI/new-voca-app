@@ -82,13 +82,14 @@ function toggleWord() {
         understoodButton.style.display = 'block';
     } else {
         wordDisplay.textContent = words[currentIndex].japanese;
+        speakWord(words[currentIndex].japanese, 'ja-JP');
         showingEnglish = true;
         understoodButton.style.display = 'none';
 
         displayedWords[currentIndex] = true;
 
         if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
-            setTimeout(displaySummaryScreen, 500);  // 最後の単語の日本語表示を待つために少し遅延を追加
+            setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
         } else {
             getNextWordIndex();
         }
@@ -166,9 +167,9 @@ function restartApp() {
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
 }
 
-function speakWord(word) {
+function speakWord(word, lang = 'en-US') {
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
+    utterance.lang = lang;
     utterance.onstart = () => {
         console.log('Speech started');
     };
