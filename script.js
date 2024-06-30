@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('understoodButton').addEventListener('click', markAsUnderstood);
     document.getElementById('orderToggle').addEventListener('click', toggleOrder);
     document.getElementById('restartButton').addEventListener('click', restartApp);
+    document.getElementById('letsStartButton').addEventListener('click', restartApp); // "Let's Start"ボタンにイベントリスナーを追加
 });
 
 function loadWordsFromGoogleSheets() {
@@ -56,7 +57,7 @@ function toggleWord() {
         understoodButton.style.display = 'block';
     } else {
         wordDisplay.textContent = words[currentIndex].japanese;
-        speakWord(words[currentIndex].japanese, 'ja-JP', 1.5); // 1.5倍の速度で日本語を再生
+        speakWord(words[currentIndex].japanese, 'ja-JP', 2.0); // 2倍の速度で日本語を再生
         showingEnglish = true;
         understoodButton.style.display = 'none';
 
@@ -129,6 +130,7 @@ function displaySummaryScreen() {
     document.getElementById('wordDisplay').style.display = 'none';
     document.getElementById('understoodButton').style.display = 'none';
     document.getElementById('orderToggle').style.display = 'none';
+    document.getElementById('restartButton').style.display = 'block'; // "Let's Start"ボタンを表示
 }
 
 function restartApp() {
@@ -138,6 +140,8 @@ function restartApp() {
     document.getElementById('summaryScreen').style.display = 'none';
     document.getElementById('wordDisplay').style.display = 'block';
     document.getElementById('orderToggle').style.display = 'block';
+    document.getElementById('understoodButton').style.display = 'none';
+    document.getElementById('restartButton').style.display = 'none';
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
 }
 
