@@ -86,12 +86,12 @@ function toggleWord() {
         understoodButton.style.display = 'none';
 
         displayedWords[currentIndex] = true;
-        if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
-            displaySummaryScreen();
-            return;
-        }
 
-        getNextWordIndex();
+        if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
+            setTimeout(displaySummaryScreen, 500);  // 最後の単語の日本語表示を待つために少し遅延を追加
+        } else {
+            getNextWordIndex();
+        }
     }
 }
 
