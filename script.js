@@ -168,6 +168,8 @@ function restartApp() {
 }
 
 function speakWord(word, lang = 'en-US') {
+    if (document.getElementById('summaryScreen').style.display === 'block') return; // まとめ画面では音声を再生しない
+
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = lang;
     utterance.onstart = () => {
