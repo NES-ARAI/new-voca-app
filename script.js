@@ -34,7 +34,7 @@ function loadWordsFromGoogleSheets() {
         })
         .then(data => {
             console.log('Data from Google Sheets:', data);  // デバッグ用にデータを表示
-            words = data.values.map(row => ({ english: row[0], japanese: row[1] }));
+            words = data.values.slice(1).map(row => ({ english: row[0], japanese: row[1] }));
             displayedWords = Array(words.length).fill(false);
             document.getElementById('orderToggle').style.display = 'block';
             document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
@@ -154,7 +154,17 @@ function restartApp() {
 }
 
 function speakWord(word) {
+    // 音声再生はユーザーのインタラクションで実行される必要があるため、関数を呼び出し元で実行
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = 'en-US';
+    utterance.onstart = () => {
+        console.log('Speech started');
+    };
+    utterance.onend = () => {
+        console.log('Speech ended');
+    };
+    utterance.onerror = (event) => {
+        console.error('Speech error:', event.error);
+    };
     window.speechSynthesis.speak(utterance);
 }
