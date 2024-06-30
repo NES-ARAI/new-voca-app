@@ -59,7 +59,6 @@ function handleFile(event) {
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-        words = excelData
         words = excelData.map(row => ({ english: row[0], japanese: row[1] }));
         displayedWords = Array(words.length).fill(false);
         localStorage.setItem('words', JSON.stringify(words));
@@ -78,17 +77,16 @@ function toggleWord() {
 
     if (showingEnglish) {
         wordDisplay.textContent = words[currentIndex].english;
-        speakWord(words[currentIndex].english, 'en-US');
+        speakWord(words[currentIndex].english);
         showingEnglish = false;
         understoodButton.style.display = 'block';
     } else {
         wordDisplay.textContent = words[currentIndex].japanese;
-        speakWord(words[currentIndex].japanese, 'ja-JP');
         showingEnglish = true;
         understoodButton.style.display = 'none';
 
         displayedWords[currentIndex] = true;
-        if (displayedWords.filter((word, index) => !understoodWords.includes(index)).every(displayed => displayed)) {
+        if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
             displaySummaryScreen();
             return;
         }
@@ -122,10 +120,10 @@ function markAsUnderstood() {
         understoodWords.push(currentIndex);
         localStorage.setItem('understoodWords', JSON.stringify(understoodWords));
     }
-    getNextWordIndex();
+    getNextWordIndex(); // Ensure the next word is retrieved correctly
     showingEnglish = true;
     document.getElementById('wordDisplay').textContent = words[currentIndex].english;
-    speakWord(words[currentIndex].english, 'en-US');
+    speakWord(words[currentIndex].english);
 }
 
 function displaySummaryScreen() {
@@ -168,9 +166,9 @@ function restartApp() {
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
 }
 
-function speakWord(word, lang) {
+function speakWord(word) {
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = lang;
+    utterance.lang = 'en-US';
     utterance.onstart = () => {
         console.log('Speech started');
     };
