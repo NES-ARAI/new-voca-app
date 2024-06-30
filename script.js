@@ -12,9 +12,6 @@ let displayedWords = [];
 document.addEventListener('DOMContentLoaded', () => {
     loadWordsFromGoogleSheets();
 
-    document.getElementById('updateButton').addEventListener('click', () => {
-        document.getElementById('fileInput').click();
-    });
     document.getElementById('wordDisplay').addEventListener('click', () => {
         if (words.length > 0) {
             toggleWord();
@@ -42,33 +39,10 @@ function loadWordsFromGoogleSheets() {
             displayedWords = Array(words.length).fill(false);
             document.getElementById('orderToggle').style.display = 'block';
             document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
-            document.getElementById('updateButton').style.display = 'block';
         })
         .catch(error => {
             console.error('Error loading data from Google Sheets:', error);  // エラーメッセージを表示
         });
-}
-
-function handleFile(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-        words = excelData.map(row => ({ english: row[0], japanese: row[1] }));
-        displayedWords = Array(words.length).fill(false);
-        localStorage.setItem('words', JSON.stringify(words));
-
-        document.getElementById('orderToggle').style.display = 'block';
-        document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
-        document.getElementById('updateButton').style.display = 'block';
-    };
-
-    reader.readAsArrayBuffer(file);
 }
 
 function toggleWord() {
@@ -82,7 +56,7 @@ function toggleWord() {
         understoodButton.style.display = 'block';
     } else {
         wordDisplay.textContent = words[currentIndex].japanese;
-        speakWord(words[currentIndex].japanese, 'ja-JP');
+        speakWord(words[currentIndex].japanese, 'ja-JP', 1.5); // 1.5倍の速度で日本語を再生
         showingEnglish = true;
         understoodButton.style.display = 'none';
 
@@ -102,11 +76,10 @@ function getNextWordIndex() {
             currentIndex = (currentIndex + 1) % words.length;
         } while (understoodWords.includes(currentIndex) || displayedWords[currentIndex]);
     } else {
-        let nextIndex;
-        do {
-            nextIndex = Math.floor(Math.random() * words.length);
-        } while (understoodWords.includes(nextIndex) || displayedWords[nextIndex]);
-        currentIndex = nextIndex;
+        const remainingWords = words.map((_, index) => index).filter(index => !understoodWords.includes(index) && !displayedWords[index]);
+        if (remainingWords.length > 0) {
+            currentIndex = remainingWords[Math.floor(Math.random() * remainingWords.length)];
+        }
     }
 }
 
@@ -114,6 +87,7 @@ function toggleOrder() {
     isSequential = !isSequential;
     const orderText = isSequential ? "順番通り" : "ランダム";
     document.getElementById('orderToggle').textContent = `表示順序: ${orderText}`;
+    currentIndex = -1; // Reset index to start from the beginning in the new order
 }
 
 function markAsUnderstood() {
@@ -121,8 +95,8 @@ function markAsUnderstood() {
         understoodWords.push(currentIndex);
         localStorage.setItem('understoodWords', JSON.stringify(understoodWords));
     }
-    getNextWordIndex(); // Ensure the next word is retrieved correctly
     showingEnglish = true;
+    getNextWordIndex(); // Ensure the next word is retrieved correctly
     document.getElementById('wordDisplay').textContent = words[currentIndex].english;
     speakWord(words[currentIndex].english);
 }
@@ -167,11 +141,12 @@ function restartApp() {
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
 }
 
-function speakWord(word, lang = 'en-US') {
+function speakWord(word, lang = 'en-US', rate = 1) {
     if (document.getElementById('summaryScreen').style.display === 'block') return; // まとめ画面では音声を再生しない
 
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = lang;
+    utterance.rate = rate; // 速度を指定
     utterance.onstart = () => {
         console.log('Speech started');
     };
