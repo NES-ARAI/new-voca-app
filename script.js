@@ -136,4 +136,56 @@ function displaySummaryScreen() {
     });
     
     document.getElementById('summaryScreen').style.display = 'block';
-    document.getElementById('word
+    document.getElementById('wordDisplay').style.display = 'none';
+    document.getElementById('understoodButton').style.display = 'none';
+    document.getElementById('orderToggle').style.display = 'none';
+    document.getElementById('restartButton').style.display = 'block'; // "Let's Start"ボタンを表示
+}
+
+function restartApp() {
+    currentIndex = 0;
+    showingEnglish = true;
+    displayedWords = Array(words.length).fill(false);
+    document.getElementById('summaryScreen').style.display = 'none';
+    document.getElementById('wordDisplay').style.display = 'block';
+    document.getElementById('orderToggle').style.display = 'block';
+    document.getElementById('understoodButton').style.display = 'none';
+    document.getElementById('restartButton').style.display = 'none';
+    document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
+    isAutoPlay = false;
+}
+
+function speakWord(word, lang = 'en-US', rate = 1, onend = null) {
+    if (document.getElementById('summaryScreen').style.display === 'block') return; // まとめ画面では音声を再生しない
+
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = lang;
+    utterance.rate = rate; // 速度を指定
+    utterance.onend = onend; // 終了時のコールバックを設定
+    utterance.onerror = (event) => {
+        console.error('Speech error:', event.error);
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+function toggleAutoPlay() {
+    if (isAutoPlay) {
+        stopAutoPlay();
+    } else {
+        startAutoPlay();
+    }
+}
+
+function startAutoPlay() {
+    isAutoPlay = true;
+    document.getElementById('autoPlayButton').textContent = '自動再生停止';
+    toggleWord();
+}
+
+function stopAutoPlay() {
+    isAutoPlay = false;
+    document.getElementById('autoPlayButton').textContent = '自動再生';
+    window.speechSynthesis.cancel(); // 音声再生を停止
+    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
+    showingEnglish = true;
+}
