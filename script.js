@@ -80,6 +80,8 @@ function toggleWord() {
 
         if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
             setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
+        } else {
+            getNextWord();  // 次の単語に進む
         }
     }
 }
