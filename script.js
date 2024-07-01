@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAutoPlay) {
             stopAutoPlay();
         } else if (words.length > 0) {
-            toggleWordManual();
+            toggleWord();
         }
     });
     document.getElementById('understoodButton').addEventListener('click', markAsUnderstood);
@@ -51,49 +51,36 @@ function loadWordsFromGoogleSheets() {
 }
 
 function toggleWord() {
-    if (showingEnglish) {
-        displayEnglish();
-    } else {
-        displayJapanese();
-    }
-}
-
-function toggleWordManual() {
-    if (showingEnglish) {
-        displayEnglish(() => {
-            showingEnglish = false;
-        });
-    } else {
-        displayJapanese(() => {
-            showingEnglish = true;
-            getNextWord();
-        });
-    }
-}
-
-function displayEnglish(onend = null) {
     const wordDisplay = document.getElementById('wordDisplay');
     const understoodButton = document.getElementById('understoodButton');
 
-    wordDisplay.textContent = words[currentIndex].english;
-    speakWord(words[currentIndex].english, 'en-US', 1, onend);
-    showingEnglish = false;
-    understoodButton.style.display = 'block';
-}
+    if (showingEnglish) {
+        wordDisplay.textContent = words[currentIndex].english;
+        speakWord(words[currentIndex].english, 'en-US', 1, () => {
+            if (isAutoPlay) {
+                showingEnglish = false;
+                toggleWord();
+            }
+        });
+        showingEnglish = false;
+        understoodButton.style.display = 'block';
+    } else {
+        wordDisplay.textContent = words[currentIndex].japanese;
+        speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, () => {
+            if (isAutoPlay) {
+                showingEnglish = true;
+                getNextWord();
+                toggleWord();
+            }
+        });
+        showingEnglish = true;
+        understoodButton.style.display = 'none';
 
-function displayJapanese(onend = null) {
-    const wordDisplay = document.getElementById('wordDisplay');
-    const understoodButton = document.getElementById('understoodButton');
+        displayedWords[currentIndex] = true;
 
-    wordDisplay.textContent = words[currentIndex].japanese;
-    speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, onend);
-    showingEnglish = true;
-    understoodButton.style.display = 'none';
-
-    displayedWords[currentIndex] = true;
-
-    if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
-        setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
+        if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
+            setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
+        }
     }
 }
 
@@ -124,8 +111,7 @@ function markAsUnderstood() {
     }
     showingEnglish = true;
     getNextWord(); // Ensure the next word is retrieved correctly
-    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
-    speakWord(words[currentIndex].english);
+    toggleWord();
 }
 
 function displaySummaryScreen() {
@@ -157,6 +143,7 @@ function displaySummaryScreen() {
     document.getElementById('understoodButton').style.display = 'none';
     document.getElementById('orderToggle').style.display = 'none';
     document.getElementById('restartButton').style.display = 'block'; // "Let's Start"ボタンを表示
+    document.getElementById('autoPlayButton').style.display = 'none'; // 自動再生ボタンを非表示
 }
 
 function restartApp() {
@@ -168,6 +155,7 @@ function restartApp() {
     document.getElementById('orderToggle').style.display = 'block';
     document.getElementById('understoodButton').style.display = 'none';
     document.getElementById('restartButton').style.display = 'none';
+    document.getElementById('autoPlayButton').style.display = 'block';
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
     isAutoPlay = false;
 }
