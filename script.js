@@ -72,15 +72,15 @@ function toggleWord() {
 }
 
 function getNextWordIndex() {
-    if (isSequential) {
-        do {
-            currentIndex = (currentIndex + 1) % words.length;
-        } while (understoodWords.includes(currentIndex) || displayedWords[currentIndex]);
-    } else {
-        const remainingWords = words.map((_, index) => index).filter(index => !understoodWords.includes(index) && !displayedWords[index]);
-        if (remainingWords.length > 0) {
+    const remainingWords = words.map((_, index) => index).filter(index => !understoodWords.includes(index) && !displayedWords[index]);
+    if (remainingWords.length > 0) {
+        if (isSequential) {
+            currentIndex = remainingWords[0];
+        } else {
             currentIndex = remainingWords[Math.floor(Math.random() * remainingWords.length)];
         }
+    } else {
+        displaySummaryScreen();
     }
 }
 
@@ -88,7 +88,7 @@ function toggleOrder() {
     isSequential = !isSequential;
     const orderText = isSequential ? "順番通り" : "ランダム";
     document.getElementById('orderToggle').textContent = `表示順序: ${orderText}`;
-    currentIndex = -1; // Reset index to start from the beginning in the new order
+    restartApp(); // Reset the app to apply the new order
 }
 
 function markAsUnderstood() {
