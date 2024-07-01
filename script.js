@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('orderToggle').addEventListener('click', toggleOrder);
     document.getElementById('restartButton').addEventListener('click', restartApp);
     document.getElementById('letsStartButton').addEventListener('click', restartApp); // "Let's Start"ボタンにイベントリスナーを追加
-    document.getElementById('autoPlayButton').addEventListener('click', startAutoPlay); // 自動再生ボタンにイベントリスナーを追加
+    document.getElementById('autoPlayButton').addEventListener('click', toggleAutoPlay); // 自動再生ボタンにイベントリスナーを追加
 });
 
 function loadWordsFromGoogleSheets() {
@@ -136,46 +136,4 @@ function displaySummaryScreen() {
     });
     
     document.getElementById('summaryScreen').style.display = 'block';
-    document.getElementById('wordDisplay').style.display = 'none';
-    document.getElementById('understoodButton').style.display = 'none';
-    document.getElementById('orderToggle').style.display = 'none';
-    document.getElementById('restartButton').style.display = 'block'; // "Let's Start"ボタンを表示
-}
-
-function restartApp() {
-    currentIndex = 0;
-    showingEnglish = true;
-    displayedWords = Array(words.length).fill(false);
-    document.getElementById('summaryScreen').style.display = 'none';
-    document.getElementById('wordDisplay').style.display = 'block';
-    document.getElementById('orderToggle').style.display = 'block';
-    document.getElementById('understoodButton').style.display = 'none';
-    document.getElementById('restartButton').style.display = 'none';
-    document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
-    isAutoPlay = false;
-}
-
-function speakWord(word, lang = 'en-US', rate = 1, onend = null) {
-    if (document.getElementById('summaryScreen').style.display === 'block') return; // まとめ画面では音声を再生しない
-
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = lang;
-    utterance.rate = rate; // 速度を指定
-    utterance.onend = onend; // 終了時のコールバックを設定
-    utterance.onerror = (event) => {
-        console.error('Speech error:', event.error);
-    };
-    window.speechSynthesis.speak(utterance);
-}
-
-function startAutoPlay() {
-    isAutoPlay = true;
-    toggleWord();
-}
-
-function stopAutoPlay() {
-    isAutoPlay = false;
-    window.speechSynthesis.cancel(); // 音声再生を停止
-    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
-    showingEnglish = true;
-}
+    document.getElementById('word
