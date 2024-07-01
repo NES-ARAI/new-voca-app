@@ -111,7 +111,8 @@ function markAsUnderstood() {
     }
     showingEnglish = true;
     getNextWord(); // Ensure the next word is retrieved correctly
-    toggleWord();
+    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
+    speakWord(words[currentIndex].english);
 }
 
 function displaySummaryScreen() {
@@ -122,17 +123,17 @@ function displaySummaryScreen() {
         wordDiv.className = 'summary-item';
         wordDiv.innerHTML = `
             <span>${word.english} - ${word.japanese}</span>
-            <button>${understoodWords.includes(index) ? '解除' : '理解した'}</button>
+            <button class="understood-toggle">${understoodWords.includes(index) ? '解除' : '理解した'}</button>
         `;
         
-        wordDiv.querySelector('button').addEventListener('click', () => {
+        wordDiv.querySelector('.understood-toggle').addEventListener('click', () => {
             if (understoodWords.includes(index)) {
                 understoodWords = understoodWords.filter(i => i !== index);
             } else {
                 understoodWords.push(index);
             }
             localStorage.setItem('understoodWords', JSON.stringify(understoodWords));
-            wordDiv.querySelector('button').textContent = understoodWords.includes(index) ? '解除' : '理解した';
+            wordDiv.querySelector('.understood-toggle').textContent = understoodWords.includes(index) ? '解除' : '理解した';
         });
 
         summaryContent.appendChild(wordDiv);
