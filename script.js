@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAutoPlay) {
             stopAutoPlay();
         } else if (words.length > 0) {
-            toggleWord();
+            toggleWordManual();
         }
     });
     document.getElementById('understoodButton').addEventListener('click', markAsUnderstood);
@@ -51,32 +51,49 @@ function loadWordsFromGoogleSheets() {
 }
 
 function toggleWord() {
+    if (showingEnglish) {
+        displayEnglish();
+    } else {
+        displayJapanese();
+    }
+}
+
+function toggleWordManual() {
+    if (showingEnglish) {
+        displayEnglish(() => {
+            showingEnglish = false;
+        });
+    } else {
+        displayJapanese(() => {
+            showingEnglish = true;
+            getNextWord();
+        });
+    }
+}
+
+function displayEnglish(onend = null) {
     const wordDisplay = document.getElementById('wordDisplay');
     const understoodButton = document.getElementById('understoodButton');
 
-    if (showingEnglish) {
-        wordDisplay.textContent = words[currentIndex].english;
-        speakWord(words[currentIndex].english, 'en-US', 1, () => {
-            if (isAutoPlay) toggleWord();
-        });
-        showingEnglish = false;
-        understoodButton.style.display = 'block';
-    } else {
-        wordDisplay.textContent = words[currentIndex].japanese;
-        speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, () => {
-            if (isAutoPlay) {
-                getNextWord();
-                toggleWord();
-            }
-        });
-        showingEnglish = true;
-        understoodButton.style.display = 'none';
+    wordDisplay.textContent = words[currentIndex].english;
+    speakWord(words[currentIndex].english, 'en-US', 1, onend);
+    showingEnglish = false;
+    understoodButton.style.display = 'block';
+}
 
-        displayedWords[currentIndex] = true;
+function displayJapanese(onend = null) {
+    const wordDisplay = document.getElementById('wordDisplay');
+    const understoodButton = document.getElementById('understoodButton');
 
-        if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
-            setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
-        }
+    wordDisplay.textContent = words[currentIndex].japanese;
+    speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, onend);
+    showingEnglish = true;
+    understoodButton.style.display = 'none';
+
+    displayedWords[currentIndex] = true;
+
+    if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
+        setTimeout(displaySummaryScreen, 500);  // 少し遅延を追加して日本語表示を待つ
     }
 }
 
