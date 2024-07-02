@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="container">
-        <h1>英単語学習アプリ</h1>
-        <div id="wordDisplay">クリックしてスタート</div>
-        <button id="understoodButton" style="display:none;">理解した</button>
-        <button id="orderToggle" style="display:block;">表示順序: 順番通り</button>
-        <button id="autoPlayButton">自動再生</button>
-        <button id="restartButton" style="display:none;">Let's start</button>
+    <div id="app">
+        <div id="wordDisplayContainer">
+            <div id="wordDisplay">クリックしてスタート</div>
+            <button id="understoodButton" style="display:none;">理解した</button>
+            <button id="orderToggle" style="display:none;">表示順序: 順番通り</button>
+            <button id="autoPlayButton" style="display:none;">自動再生</button>
+            <button id="summaryButton" style="display:none;">まとめ画面</button>
+        </div>
         <div id="summaryScreen" style="display:none;">
-            <h2>まとめ画面</h2>
             <div id="summaryContent"></div>
-            <button id="letsStartButton">Let's start</button>
+            <button id="restartButton">もう一度</button>
         </div>
     </div>
     <script src="script.js"></script>
