@@ -7,8 +7,9 @@ let isSequential = true;
 let showingEnglish = true;
 let understoodWords = JSON.parse(localStorage.getItem('understoodWords')) || [];
 let isAutoPlay = false;
+let displayedWords = []; // 初期化
+let remainingIndices = []; // ランダム表示用のインデックスリスト
 
-// ページが読み込まれたときにGoogle Sheetsから単語リストをロード
 document.addEventListener('DOMContentLoaded', () => {
     loadWordsFromGoogleSheets();
 
@@ -22,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('understoodButton').addEventListener('click', markAsUnderstood);
     document.getElementById('orderToggle').addEventListener('click', toggleOrder);
     document.getElementById('restartButton').addEventListener('click', restartApp);
-    document.getElementById('letsStartButton').addEventListener('click', restartApp); // "Let's Start"ボタンにイベントリスナーを追加
-    document.getElementById('autoPlayButton').addEventListener('click', toggleAutoPlay); // 自動再生ボタンにイベントリスナーを追加
+    document.getElementById('autoPlayButton').addEventListener('click', toggleAutoPlay);
+    document.getElementById('summaryButton').addEventListener('click', displaySummaryScreen);
 });
 
 function loadWordsFromGoogleSheets() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:B1000?key=${API_KEY}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A2:B2000?key=${API_KEY}`;
     console.log(`Fetching data from URL: ${url}`);  // デバッグ用にURLを表示
 
     fetch(url)
@@ -39,12 +40,17 @@ function loadWordsFromGoogleSheets() {
         })
         .then(data => {
             console.log('Data from Google Sheets:', data);  // デバッグ用にデータを表示
-            words = data.values.slice(1).map(row => ({ english: row[0], japanese: row[1] }));
+            words = data.values.map(row => ({ english: row[0], japanese: row[1] }));
+            displayedWords = Array(words.length).fill(false); // 初期化
+            remainingIndices = Array.from(words.keys()); // ランダム表示用のインデックスリストを初期化
             document.getElementById('orderToggle').style.display = 'block';
+            document.getElementById('autoPlayButton').style.display = 'block';
+            document.getElementById('summaryButton').style.display = 'block';
             document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
+            currentIndex = 0; // インデックスを初期化
         })
         .catch(error => {
-            console.error('Error loading data from Google Sheets:', error);  // エラーメッセージを表示
+            console.error('Error loading data from Google Sheets:', error);
         });
 }
 
@@ -54,37 +60,40 @@ function toggleWordManual() {
 
     if (showingEnglish) {
         wordDisplay.textContent = words[currentIndex].english;
-        speakWord(words[currentIndex].english);
+        speakWord(words[currentIndex].english, 'en-US', 1, () => {}, true);
         showingEnglish = false;
-        understoodButton.style.display = 'block';
     } else {
         wordDisplay.textContent = words[currentIndex].japanese;
-        speakWord(words[currentIndex].japanese, 'ja-JP', 2.0);
+        speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, () => {}, true);
         showingEnglish = true;
-        understoodButton.style.display = 'none';
-        getNextWord();
-        if (currentIndex === 0) {
+        displayedWords[currentIndex] = true; // 現在の単語を表示済みとして記録
+
+        if (displayedWords.every((val, idx) => understoodWords.includes(idx) || val)) {
             setTimeout(displaySummaryScreen, 500);
+        } else {
+            getNextWord();
         }
     }
+
+    understoodButton.style.display = 'block';
 }
 
 function getNextWord() {
+    window.speechSynthesis.cancel(); // 次の単語に移る前に音声再生をキャンセル
+    let previousIndex = currentIndex;
     if (isSequential) {
         do {
             currentIndex = (currentIndex + 1) % words.length;
-        } while (understoodWords.includes(currentIndex) && currentIndex !== 0);
+        } while (understoodWords.includes(currentIndex) && currentIndex !== previousIndex);
     } else {
-        const remainingWords = words.map((_, index) => index).filter(index => !understoodWords.includes(index));
-        if (remainingWords.length > 0) {
-            currentIndex = remainingWords[Math.floor(Math.random() * remainingWords.length)];
-        } else {
-            currentIndex = 0;
+        remainingIndices = remainingIndices.filter(index => !understoodWords.includes(index));
+        if (remainingIndices.length > 0) {
+            currentIndex = remainingIndices.splice(Math.floor(Math.random() * remainingIndices.length), 1)[0];
         }
     }
-    // 全ての単語を表示した場合、まとめ画面を表示
-    if (displayedWords.filter((val, idx) => !understoodWords.includes(idx)).every(displayed => displayed)) {
-        setTimeout(displaySummaryScreen, 500);
+
+    if (currentIndex === previousIndex) {
+        currentIndex = (currentIndex + 1) % words.length;
     }
 }
 
@@ -92,7 +101,11 @@ function toggleOrder() {
     isSequential = !isSequential;
     const orderText = isSequential ? "順番通り" : "ランダム";
     document.getElementById('orderToggle').textContent = `表示順序: ${orderText}`;
-    currentIndex = -1; // Reset index to start from the beginning in the new order
+    currentIndex = 0; // インデックスを初期化して最初からスタート
+    displayedWords = Array(words.length).fill(false); // 表示済み単語をリセット
+    remainingIndices = Array.from(words.keys()); // ランダム表示用のインデックスリストをリセット
+    getNextWord(); // 次の単語を取得
+    document.getElementById('wordDisplay').textContent = 'クリックしてスタート'; // 表示をリセット
 }
 
 function markAsUnderstood() {
@@ -130,28 +143,33 @@ function displaySummaryScreen() {
     });
     
     document.getElementById('summaryScreen').style.display = 'block';
-    document.getElementById('wordDisplay').style.display = 'none';
+    document.getElementById('wordDisplayContainer').style.display = 'none';
     document.getElementById('understoodButton').style.display = 'none';
     document.getElementById('orderToggle').style.display = 'none';
-    document.getElementById('restartButton').style.display = 'block'; // "Let's Start"ボタンを表示
+    document.getElementById('restartButton').style.display = 'block'; // "もう一度"ボタンを表示
     document.getElementById('autoPlayButton').style.display = 'none'; // 自動再生ボタンを非表示
+    document.getElementById('summaryButton').style.display = 'none'; // まとめ画面ボタンを非表示
 }
 
 function restartApp() {
-    currentIndex = 0;
+    currentIndex = 0; // インデックスを初期化
     showingEnglish = true;
-    displayedWords = Array(words.length).fill(false);
+    displayedWords = Array(words.length).fill(false); // 表示済み単語をリセット
+    remainingIndices = Array.from(words.keys()); // ランダム表示用のインデックスリストを初期化
     document.getElementById('summaryScreen').style.display = 'none';
-    document.getElementById('wordDisplay').style.display = 'block';
+    document.getElementById('wordDisplayContainer').style.display = 'block';
     document.getElementById('orderToggle').style.display = 'block';
     document.getElementById('understoodButton').style.display = 'none';
     document.getElementById('restartButton').style.display = 'none';
     document.getElementById('autoPlayButton').style.display = 'block';
+    document.getElementById('autoPlayButton').textContent = '自動再生'; // ボタン表示を初期化
+    document.getElementById('summaryButton').style.display = 'block'; // まとめ画面ボタンを再表示
     document.getElementById('wordDisplay').textContent = 'クリックしてスタート';
     isAutoPlay = false;
+    getNextWord(); // 初期化後に次の単語を取得
 }
 
-function speakWord(word, lang = 'en-US', rate = 1, onend = null) {
+function speakWord(word, lang = 'en-US', rate = 1, onend = null, isManual = false) {
     if (document.getElementById('summaryScreen').style.display === 'block') return; // まとめ画面では音声を再生しない
 
     const utterance = new SpeechSynthesisUtterance(word);
@@ -161,6 +179,11 @@ function speakWord(word, lang = 'en-US', rate = 1, onend = null) {
     utterance.onerror = (event) => {
         console.error('Speech error:', event.error);
     };
+
+    if (!isAutoPlay && isManual) {
+        window.speechSynthesis.cancel(); // 手動再生の場合、次の単語に移る前に音声再生をキャンセル
+    }
+    
     window.speechSynthesis.speak(utterance);
 }
 
@@ -174,7 +197,7 @@ function toggleAutoPlay() {
 
 function startAutoPlay() {
     isAutoPlay = true;
-    document.getElementById('autoPlayButton').textContent = '自動再生停止';
+    document.getElementById('autoPlayButton').textContent = '再生停止';
     autoPlayNextWord();
 }
 
@@ -182,8 +205,6 @@ function stopAutoPlay() {
     isAutoPlay = false;
     document.getElementById('autoPlayButton').textContent = '自動再生';
     window.speechSynthesis.cancel(); // 音声再生を停止
-    document.getElementById('wordDisplay').textContent = words[currentIndex].english;
-    showingEnglish = true;
 }
 
 function autoPlayNextWord() {
@@ -192,24 +213,18 @@ function autoPlayNextWord() {
     const wordDisplay = document.getElementById('wordDisplay');
     const understoodButton = document.getElementById('understoodButton');
 
-    if (showingEnglish) {
-        wordDisplay.textContent = words[currentIndex].english;
-        speakWord(words[currentIndex].english, 'en-US', 1, () => {
-            showingEnglish = false;
-            autoPlayNextWord();
-        });
-        understoodButton.style.display = 'block';
-    } else {
+    wordDisplay.textContent = words[currentIndex].english;
+    speakWord(words[currentIndex].english, 'en-US', 1, () => {
         wordDisplay.textContent = words[currentIndex].japanese;
         speakWord(words[currentIndex].japanese, 'ja-JP', 2.0, () => {
-            showingEnglish = true;
-            getNextWord();
-            if (currentIndex === 0) {
+            displayedWords[currentIndex] = true; // 現在の単語を表示済みとして記録
+            if (displayedWords.every((val, idx) => understoodWords.includes(idx) || val)) {
                 setTimeout(displaySummaryScreen, 500);
             } else {
-                autoPlayNextWord();
+                getNextWord();
+                autoPlayNextWord(); // 次の英単語を表示する
             }
         });
-        understoodButton.style.display = 'none';
-    }
+    });
+    understoodButton.style.display = 'block';
 }
